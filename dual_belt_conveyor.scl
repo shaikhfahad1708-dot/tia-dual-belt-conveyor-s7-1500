@@ -1,0 +1,48 @@
+﻿FUNCTION_BLOCK "Block_1"
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      safety_ok : Bool;
+      btn_start : Bool;
+      btn_stop : Bool;
+      btn_reset : Bool;
+      entry_sensor : Bool;
+      exit_jam_Sensor : Bool;
+   END_VAR
+
+   VAR_OUTPUT 
+      infeed_motor : Bool;
+      discharge_motor : Bool;
+      jam_fault : Bool;
+   END_VAR
+
+   VAR 
+      auto_latched : Bool;
+      fault_latched : Bool;
+   END_VAR
+
+
+BEGIN
+	IF NOT #safety_ok THEN
+	    #fault_latched := FALSE;
+	    #auto_latched := FALSE;
+	END_IF;
+	IF #safety_ok AND NOT #fault_latched AND #btn_start THEN
+	    #auto_latched := TRUE;
+	END_IF;
+	IF #btn_stop THEN
+	    #auto_latched := FALSE;
+	END_IF;
+	IF #auto_latched AND #exit_jam_Sensor THEN
+	    #fault_latched := TRUE;
+	    #auto_latched := FALSE;
+	END_IF;
+	IF #btn_reset AND NOT #exit_jam_Sensor THEN
+	    #fault_latched := FALSE;
+	END_IF;
+	#discharge_motor := #safety_ok AND #auto_latched AND NOT #fault_latched;
+	#infeed_motor := #discharge_motor AND NOT #exit_jam_Sensor;
+	#jam_fault := #fault_latched;
+	        
+END_FUNCTION_BLOCK
+
